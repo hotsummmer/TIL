@@ -1,6 +1,12 @@
 Class Cs :
+    @staticmethod
     def static_method():
-        print
+        print("Static method")
+    @classmethod
+    def class_method(cls):
+        print("Class method")
+    def instance_method(self):
+        print("Instance method")
 
 i = Cs()
 Cs.static_method()
