@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CodeSpitz71-1(VER#3)</title>
+</head>
+<body>
+  <section id="data"></sction>
+
+  <script>
+  const Data = class{
+    constructor(url){
+      if(!url || typeof url !== 'string') throw 'Invalid url';
+      this._url = url;
+    }
+    async getData(){
+      const response = await fetch(this._url);
+      if(!response.ok) throw 'Data Load Failed';
+      return await response.json();
+    }
+  };
+  const Renderer = class{
+  	constructor(parent){
+  		if(!parent) throw 'Invalid parent';
+  		this._parent = parent;
+  	}
+  	async render(data){
+      if(!data || !(data instanceof Data)) throw 'Invalid data type';
+      const json = await data.getData();
+      if(!json.title || !json.header || !json.items) throw 'Invalid table data';
+      const fields = json;
+  		const parent = document.querySelector(this._parent);
+      if(!parent) throw 'Invalid Parent Element';
+  		parent.innerHTML = '';
+  		const table = document.createElement('table');
+  		const caption = document.createElement('caption');
+      caption.innerHTML = fields.title;
+  		table.appendChild(caption);
+  		table.appendChild(
+  			fields.header.reduce((thead, data)=>{
+  				const th = document.createElement('th');
+  				th.innerHTML = data;
+  				thead.appendChild(th);
+  				return thead;
+  			}, document.createElement('thead'))
+  		);
+  		parent.appendChild(table);
+  		parent.appendChild(
+  			fields.items.reduce((table, row)=>{
+  				table.appendChild(
+            row.reduce((tr, data)=>{
+    					const td = document.createElement('td');
+              td.innerHTML = data;
+    					tr.appendChild(td);
+    					return tr;
+    				}, document.createElement('tr'))
+          );
+  				return table;
+  			}, table)
+  		);
+  	}
+  };
+  const renderer = new Renderer("#data");
+  renderer.render(new Data("71_1.json"));
+  </script>
+</body>
+</html>
