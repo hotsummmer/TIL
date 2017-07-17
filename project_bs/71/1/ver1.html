@@ -11,10 +11,10 @@
   const Table = (_=>{
     const Private = Symbol();
     return class{
-    	constructor(parent){
-    		if(!parent) throw 'invalid parent';
-    		this[Private] = {parent};
-    	}
+      constructor(parent){
+        if(!parent) throw 'invalid parent';
+        this[Private] = {parent};
+      }
       async load(url){
         const response = await fetch(url);
         if(!response.ok) throw 'Data Load Failed';
@@ -24,40 +24,40 @@
         Object.assign(this[Private], {title, header, items});
         this._render();
       }
-    	_render(){
+      _render(){
         const fields = this[Private];
-    		const parent = document.querySelector(fields.parent);
+        const parent = document.querySelector(fields.parent);
         if(!parent) throw 'Invalid Parent';
-    		parent.innerHTML = '';
+        parent.innerHTML = '';
 
-    		const table = document.createElement('table');
-    		const caption = document.createElement('caption');
+        const table = document.createElement('table');
+        const caption = document.createElement('caption');
         caption.innerHTML = fields.title;
-    		table.appendChild(caption);
+        table.appendChild(caption);
 
-    		table.appendChild(
-    			fields.header.reduce((thead, data)=>{
-    				const th = document.createElement('th');
-    				th.innerHTML = data;
-    				thead.appendChild(th);
-    				return thead;
-    			}, document.createElement('thead'))
-    		);
-    		parent.appendChild(table);
-    		parent.appendChild(
-    			fields.items.reduce((table, row)=>{
-    				table.appendChild(
+        table.appendChild(
+          fields.header.reduce((thead, data)=>{
+            const th = document.createElement('th');
+            th.innerHTML = data;
+            thead.appendChild(th);
+            return thead;
+          }, document.createElement('thead'))
+        );
+        parent.appendChild(table);
+        parent.appendChild(
+          fields.items.reduce((table, row)=>{
+            table.appendChild(
               row.reduce((tr, data)=>{
-      					const td = document.createElement('td');
+                const td = document.createElement('td');
                 td.innerHTML = data;
-      					tr.appendChild(td);
-      					return tr;
-      				}, document.createElement('tr'))
+                tr.appendChild(td);
+                return tr;
+              }, document.createElement('tr'))
             );
-    				return table;
-    			}, table)
-    		);
-    	}
+            return table;
+          }, table)
+        );
+      }
     }
   })();
   const table = new Table("#data");
