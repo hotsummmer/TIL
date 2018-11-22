@@ -1,8 +1,8 @@
 var rj3 = {};
 rj3.svg = {};
 rj3.svg.line = function(){
-  var getX = function(){return point[0];},
-      getY = function(){return point[1];},
+  var getX = function(point){return point[0];},
+      getY = function(point){return point[1];},
       interpolate = function(points){return points.join('L');};
   function line(data){
     var segments = [], points = [], i = -1, n = data.length, d;
@@ -28,19 +28,18 @@ rj3.svg.line = function(){
   }
   return line;
 }
-
 (function(){
-  var arrayData = [
-    [10, 130],
-    [100, 60],
-    [190, 160],
-    [280,10]
-  ];
+  // var arrayData = [
+  //   [10, 130],
+  //   [100, 60],
+  //   [190, 160],
+  //   [280,10]
+  // ];
   var objectData = [
-    {x:10, y:130},
-    {x:100, y:60},
-    {x:190, y:160},
-    {x:280, y:10}
+    {x:10, y:130, z:99},
+    {x:100, y:60, z:202},
+    {x:190, y:160, z:105},
+    {x:280, y:10, z:175}
   ],
   lineGenerator = rj3.svg.line()
     .x(function(d){return d.x;})
