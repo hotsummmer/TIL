@@ -17,16 +17,16 @@ const Task = class{
   byTitle(stateGroup = true){return this.list('title', stateGroup);}
   byDate(stateGroup = true){return this.list('date', stateGroup);}
   list(sort, stateGroup = true){
-    const f = (a, b)=>a['_' + sort] > b['_' + sort];
-    this._getList(f, stateGroup);
+    this._getList(sort, stateGroup);
   }
   _getList(sort, stateGroup){
+    const f = (a, b)=>a['_' + sort] > b['_' + sort];
     const list = this._list, map = task=>task.list(sort, stateGroup);
     return {
       task : this,
-      list : !stateGroup ? [...list].sort(sort).map(map) : [
-        ...list.filter(v=>!v.isComplete()).sort(sort).map(map),
-        ...list.filter(v=>v.isComplete()).sort(sort).map(map)
+      list : !stateGroup ? [...list].sort(f).map(map) : [
+        ...list.filter(v=>!v.isComplete()).sort(f).map(map),
+        ...list.filter(v=>v.isComplete()).sort(f).map(map)
       ]
     }
   }
@@ -55,14 +55,14 @@ const DomRenderer = class{
     return parent;
   }
 }
-const root = new Task('1');
-const list1 = new Task('개발');
-list1.add('코드스피츠 강의 수강');
-list1.add('지라 클라우드 접속');
+const todo1 = new Task('개발');
+todo1.add('코드스피츠 강의 수강');
+todo1.add('지라 클라우드 접속');
 
-const list2 = new Task('운동');
-list1.add('요가');
-list1.add('달리기 30분');
-const {list} = list2.byTitle();
+const todo2 = new Task('운동');
+todo2.add('요가');
+todo2.add('달리기 30분');
+
+const {list} = todo2.byTitle();
 list[1].task.add('todo.js 복기');
 list[1].task.add('ES6 문법 체크');
