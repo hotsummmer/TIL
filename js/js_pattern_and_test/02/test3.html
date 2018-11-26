@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>의존성 주입 테스트 with Container</title>
+	<link data-require="jasmin@*" data-semver="2.0.0" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine.css">	
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine.js"></script>
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine-html.js"></script>
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/boot.js"></script>
+	<script src="di.js"></script>
+</head>
+<body>
+<script>
+MyApp = {};
+MyApp.diContainer = new DiContainer();
+MyApp.diContainer.register(
+	'service',
+	[],
+	function(){return new ConferenceWebSvc(); }
+);
+MyApp.diContainer.register(
+	'Messenger',
+	[],
+	function(){ return new Message(); }
+);
+Myapp.diContainer.register(
+	'AttendeeFactory',
+	['Service', 'Messanger'],
+	function(service, messanger){
+		return function(attendeeId){ return new Attendee(service, messenger, attendeeId); }
+	}
+);
+var attendeeId = 123, sessionId = 1;
+var attendee = MyApp.diContainer.get('AttendeeFactory', attendeeId);
+attendee.reserve(sessionId);
+</script>
+</body>
+</html>

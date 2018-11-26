@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Jasmine 테스트</title>
+	<link data-require="jasmin@*" data-semver="2.0.0" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine.css">	
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine.js"></script>
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine-html.js"></script>
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/boot.js"></script>
+</head>
+<body>
+<script>
+	function createReservation(passenger, flight){
+		return {passengerInfo:passenger, flightInfo:flight};
+	};
+	function createReservationSpy(passenger, flight, saver){
+		var reservation = {passengerInfo:passenger, flightInfo:flight};
+		saver.saveReservation(reservation);
+		return reservation;
+	};
+	function ReservationSaver(){
+		this.saveReservation = function(reservation){}
+	}
+	describe('createReservation(passenger, flight)', function(){
+		it('주어진 passenger를 passengerInfo 프로퍼티에 할당한다', function(){
+			var testPassenger = {firstName:'윤지', lastName:'김'};
+			var testFlight = {number:'3343', carrier:'대한항공', destination:'울산'};
+			var reservation = createReservation(testPassenger, testFlight);
+			expect(reservation.passengerInfo).toBe(testPassenger);
+		});
+		it('주어진 flight를 flightInfo 프로퍼티에 할당한다', function(){
+			var testPassenger = {firstName:'윤지', lastName:'김'};
+			var testFlight = {number:'3343', carrier:'대한항공', destination:'울산'};
+			var reservation = createReservation(testPassenger, testFlight);
+			expect(reservation.flightInfo).toBe(testFlight);
+		});
+	});	
+	describe('createReservation(passenger, flight) -beforeEach/afterEach', function(){
+		var testPassenger, testFlight, testReservation;
+		beforeEach(function(){
+			testPassenger = {firstName:'윤지', lastName:'김'};
+			testFlight = {number:'3343', carrier:'대한항공', destination:'울산'};
+			reservation = createReservation(testPassenger, testFlight);
+		});
+		it('주어진 passenger를 passengerInfo 프로퍼티에 할당한다', function(){
+			expect(reservation.passengerInfo).toBe(testPassenger);
+		});
+		it('주어진 flight를 flightInfo 프로퍼티에 할당한다', function(){
+			expect(reservation.flightInfo).toBe(testFlight);
+		});
+	});
+	describe('createReservation(passenger, flight) -spy가', function(){
+		var testPassenger, testFlight, testReservation, testSaver;
+		beforeEach(function(){
+			testPassenger = {firstName:'윤지', lastName:'김'};
+			testFlight = {number:'3343', carrier:'대한항공', destination:'울산'};
+			testSaver = new ReservationSaver();
+			spyOn(testSaver, 'saveReservation');
+			reservation = createReservationSpy(testPassenger, testFlight, testSaver);
+		});
+		it('주어진 passenger를 passengerInfo 프로퍼티에 할당한다', function(){
+			expect(reservation.passengerInfo).toBe(testPassenger);
+		});
+		it('주어진 flight를 flightInfo 프로퍼티에 할당한다', function(){
+			expect(reservation.flightInfo).toBe(testFlight);
+		});
+		it('예약 정보를 저장한다',function(){			
+			expect(testSaver.saveReservation).toHaveBeenCalled();
+		});
+	});
+</script>
+</body>
+</html>

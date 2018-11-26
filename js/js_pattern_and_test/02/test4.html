@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>AOP 테스트</title>
+	<link data-require="jasmin@*" data-semver="2.0.0" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine.css">	
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine.js"></script>
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/jasmine-html.js"></script>
+	<script data-require="jasmin@*" data-semver="2.0.0" src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/2.0.0/boot.js"></script>
+<!--	<script src="aop.js"></script>-->
+</head>
+<body>
+<script>
+Aop = {
+	around:function(fnName, advice, fnObj){
+		var originalFn = fnObj[fnName];
+		fnObj[fnName] = function(){
+			return advice.call(this, {fn:originalFn, args:arguments});
+		};
+	},
+	next:function(targetInfo){
+//		targetInfo.fn();
+//		targetInfo.fn.apply({}, targetInfo.args);
+//		return targetInfo.fn.apply({}, targetInfo.args);
+		return targetInfo.fn.apply(this, targetInfo.args);
+	}
+};
+describe('Aop', function(){
+	var targetObj, executionPoints, argPassingAdvice, argsToTarget;
+	Target = function(){
+		var self = this;
+		this.targetFn = function(){expect(this).toBe(self);}
+	};
+	beforeEach(function(){
+		targetObj = {
+			targetFn:function(){
+				executionPoints.push('targetFn');
+				argsToTarget = Array.prototype.slice.call(arguments, 0);
+			}
+		};
+		executionPoints = [];
+		argPassingAdvice = function(targetInfo){
+			targetInfo.fn.apply(this, targetInfo.args);
+		};
+		argsToTarget = [];
+	});
+	describe('Aop.around(fnName, advice, targetObj)', function(){
+		it('타깃 함수를 호출 시 어드바이스를 실행하도록 한다', function(){
+			var executedAdvice = false;
+			var advice = function(){ executedAdvice = true; }
+			Aop.around('targetFn', advice, targetObj);
+			targetObj.targetFn();
+			expect(executedAdvice).toBe(true);
+		});
+		it('어드바이스가 타깃 호출을 래핑한다', function(){
+			var wrappingAdvice = function(targetInfo){
+				executionPoints.push('wrappingAdvice - 처음');
+				targetInfo.fn();
+				executionPoints.push('wrappingAdvice - 끝');
+			};
+			Aop.around('targetFn', wrappingAdvice, targetObj);
+			targetObj.targetFn();
+			expect(executionPoints).toEqual(['wrappingAdvice - 처음', 'targetFn', 'wrappingAdvice - 끝']);
+		});
+		it('마지막 어드바이스가 기존 어드바이스에 대해 실행되는 방식으로 체이닝할 수 있다', function(){
+			var adviceFactory = function(adviceId){				
+				return (function(targetInfo){
+					executionPoints.push('wrappingAdvice - 처음 '  + adviceId);
+					targetInfo.fn();
+					executionPoints.push('wrappingAdvice - 끝 '  + adviceId);
+				});
+			};
+			Aop.around('targetFn', adviceFactory('안쪽'), targetObj);
+			Aop.around('targetFn', adviceFactory('바깥쪽'), targetObj);
+			targetObj.targetFn();
+			expect(executionPoints).toEqual([
+				'wrappingAdvice - 처음 바깥쪽',
+				'wrappingAdvice - 처음 안쪽',
+				'targetFn',
+				'wrappingAdvice - 끝 안쪽',
+				'wrappingAdvice - 끝 바깥쪽'
+			]);
+		});
+		it('타깃의 반환값도 어드바이스에서 참조할 수 있다.', function(){
+			Aop.around('targetFn', argPassingAdvice, targetObj);
+			var returnedValue = targetObj.targetFn();
+			expect(returnedValue).toBe(targetFnReturn);
+		});
+		it('타깃 함수를 해당 객체의 콘텍스트에서 실행한다.', function(){
+			var Target = function(){
+				var self = this;
+				this.targetFn = function(){ expect(this).toBe(self); }
+			};
+			var targetInstance = new Target();
+			var spyOnInstance = spyOn(targetInstance, 'targetFn').and.callThrough();
+			Aop.around('targetFn', argPassingAdvice, targetInstance);
+			targetInstance.targetFn();
+			expect(spyOnInstance).toHaveBeenCalled();
+		});
+		it('어드바이스를 타깃의 콘텍스트에서 실행한다.', function(){
+			var advice = function(){ expect(this).toBe(targetObj); }
+			Aop.around('targetFn', advice, targetObj);
+			targetObj.targetFn();
+		});
+	});
+	describe('Aop.next(context, targetInfo)', function(){
+		var advice = function(TargetInfo){ return Aop.next.call(this, targetInfo);}
+		var originalFn;
+		beforeEach(function(){
+			originalFn = targetObj.targetFn;
+			Aop.around('targetFn', advice, targetObj);
+		});
+		it('tragetInfo.fn에 있는 함수를 호출한다', function(){
+			targetObj.targetFn();
+			expect(executionPoints).toEqual(['targetFn']);
+		});
+		it('tragetInfo.args에 인자를 전달한다', function(){
+			targetObj.targetFn('a', 'b');
+			expect(argsToTarget).toEqual(['a', 'b']);
+		});
+		it('tragetInfo 함수에서 받은 값을 반환한다', function(){
+			var ret = targetobj.targetFn();			
+			expect(ret).toEqual(targetFnReturn);
+		});
+		it('주어진 콘텍스트에서 타깃 함수를 실행한다.', function(){
+			var targetInstance = new Target();
+			var spyOnInstance = spyOn(targetInstance, 'targetFn').and.callThrough();
+			Aop.around('targetFn', advice, targetInstance);
+			targetInstance.targetFn();
+			expect(spyOnInstance).toHaveBeenCalled();
+		});
+		
+	});
+});
+</script>
+</body>
+</html>
