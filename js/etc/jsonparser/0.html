@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Json Parser</title>
+</head>
+<body>
+<script>
+let data = `{
+	"number":3,
+	"str":"test",
+	"str2":"\"Hello World!\"";
+	"bool":true,
+	"null":null,
+	"undefined":undefined,
+	"arr":[1, 2, 3],
+	"obj":{"key":"val"}
+}`;
+const TYPE_OBJ = {}, TYPE_ARRAY = {}; 
+const json = v=>{
+	let curr, stack = [{parent:null, val:v, idx:0, key:null, is:TYPE_OBJ}];
+	while(curr = stack.pop()){
+		console.log(curr);
+		switch(curr.val[0]){
+			case '{' : stack.push({parent:curr, val:curr.val.substr(1), idx:curr.idx, key:curr.key, is:TYPE_OBJ}); break;
+			case '[' : stack.push({parent:curr, val:curr.val.substr(1), idx:curr.idx, key:curr.key, is:TYPE_ARR}); break;
+			case '}' || ']' : stack.push({parent:curr.parent.parent, val:curr.val.substr(1), idx:curr.parent.idx, key:curr.parent.key, is:TYPE_OBJ}); break;
+			case ',' : stack.push({parent:curr.parent, val:curr.val.substr(1), idx:curr.parent.idx, key:curr.parent.key, is:TYPE_OBJ}); break;
+		}
+	};
+	return v;
+};
+console.log(json(data));
+</script>
+</body>
+</html>

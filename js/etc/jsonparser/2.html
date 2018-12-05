@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>무제 문서</title>
+</head>
+<body>
+<pre id="result"></pre>
+<script>
+'use strict';
+//string, number ,true ,false , null, object ,array
+const parse = (_=>{
+	const obj = (v, i)=>{
+		let isOpen = true, parent = {}, r, k, val;
+		while(isOpen){
+			r = get(v, i, isOpen);
+			i = r.i;
+			isOpen = r.isOpen;
+			if(r.v){
+				if(!k){
+					k = r.v;
+					if(typeof k !== 'string') throw 'Object key should be string';
+				}else{
+					parent[k] = r.v;
+					k = '';
+				}
+			}
+		}
+		return {v:parent, i:i};
+	};
+	const str = (v, i)=>{
+		const t = v.indexOf('"', i);
+		return {v:v.substring(i, t), i:t + 1};
+	}
+	const number = (v, i)=>{
+		console.log('number v:', v.substring(i));
+		const r = (v.substring(i)).match(/^[-]?\d+(?:[.]\d+)?$/);
+		console.log(r);
+		//console.log('number', v, '::', i, '::', t);
+		throw 1;
+		return {v:+v.substring(i, t), i:t + 1};
+	}
+	const etc = (v, i)=>{
+		let t = v[i];
+		while(++i < v.length) {
+			if(t == ']' || t == '}' || t == ',') break;
+			else t += v[i];
+		}
+		return {v:t, i:i};
+	}
+	const get = (v, i, isOpen)=>{
+		let r, t = v[i];
+		if(t == '{'){
+			
+		}
+	}
+	return v=>{
+		let curr, r = {}, stack = [{p:r, v:v.trim(), t:'obj'}];
+		let i, t, p, k;
+		while(curr = stack.pop()){
+			p = curr.p, v = curr.v, t = curr.t;
+			console.log(v[0], "::", curr);
+			if(v[0] == '{'){
+				console.log(1);
+				stack.push({p:curr.p, v:v.substr(1), t:'obj'});
+			}else if(v[0] == '['){
+				console.log(2);
+				stack.push({p:curr, v:v, t:'arr'});
+			}else if(v[0] == '}' || v[i] == ']'){
+				console.log(3);
+				stack.push({p:p.p, v:v.substr(1), t:p.t});
+			}else{
+				if(t === 'obj'){
+					//k, v쌍 뽑아내서
+					const r = v.match(/"([^]+)"\s*:\s*"([^"]+)",?/g);
+					//배열 돌면서 k:v로 뽑아내기
+					console.log("r", r);
+					r.forEach(kv=>{
+						kv = kv.split(':').map(v=>v.trim());
+						p[kv[0].substr(1, kv[0].length - 2)] = kv[1];
+					});
+					console.log('obj 처리 결과 ', p);
+				}else if(t === 'arr'){
+				console.log(5, v);
+					
+				}else{
+				console.log(6, v);
+					
+				}
+			}
+		}
+		console.log("=====================");
+		console.log("r", r);
+		return r;
+	}
+})();
+//const str = `
+//{
+//    "test1":"테스트1",
+//    "123":1234,
+//    "types":{
+//        "name":"string",
+//        "height":"number",
+//        "classes":[1,2,3,4, "aclass","bclass"]
+//    },
+//    "names":["aaa", "bbb","ccc"],
+//    "flag":true
+//}
+//`;
+const str = `
+{
+	"test1":"테스트1       ",
+	"test2":123,
+	"test3":true
+}
+`;
+document.getElementById('result').innerHTML = parse(str);
+</script>
+</body>
+</html>

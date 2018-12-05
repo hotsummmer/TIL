@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>무제 문서</title>
+</head>
+<body>
+<pre id="result"></pre>
+<script>
+'use strict';
+//string, number ,true ,false , null, object ,array
+const parse = (_=>{
+	const obj = (v, i)=>{
+		let isOpen = true, parent = {}, r, k, val;
+		while(isOpen){
+			r = get(v, i, isOpen);
+			i = r.i;
+			isOpen = r.isOpen;
+			if(r.v){
+				if(!k){
+					k = r.v;
+					if(typeof k !== 'string') throw 'Object key should be string';
+				}else{
+					parent[k] = r.v;
+					k = '';
+				}
+			}
+		}
+		return {v:parent, i:i};
+	};
+	const str = (v, i)=>{
+		const t = v.indexOf('"', i);
+		return {v:v.substring(i, t), i:t + 1};
+	}
+	const number = (v, i)=>{
+		console.log('number v:', v.substring(i));
+		const r = (v.substring(i)).match(/^[-]?\d+(?:[.]\d+)?$/);
+		console.log(r);
+		//console.log('number', v, '::', i, '::', t);
+		throw 1;
+		return {v:+v.substring(i, t), i:t + 1};
+	}
+	const etc = (v, i)=>{
+		let t = v[i];
+		while(++i < v.length) {
+			if(t == ']' || t == '}' || t == ',') break;
+			else t += v[i];
+		}
+		return {v:t, i:i};
+	}
+	const get = (v, i, isOpen)=>{
+		let r, t = v[i];
+		//console.log('get : ', v, '::', i, '::', isOpen);
+		if([',', ':', ' ', '\n', '\r', '\t'].indexOf(t) !== -1){
+			console.log("type 1");
+			v = "";
+			i++;
+		}else if(['"'].indexOf(t) !== -1){ //str
+			console.log("type 2");
+			r = str(v, i + 1);
+			v = r.v;
+			i = r.i;			
+		}else if(/^[-]?\d+(?:[.]\d+)?$/g.test(t)){ //number		
+			console.log("type 3");	
+			r = number(v, i);
+			v = r.v;
+			i = r.i;
+		}else if(['n','t','f'].indexOf(t.toLowerCase()) !== -1){ //bool, null
+			console.log("type 4");
+			r = etc(v, i);
+			v = r.v;
+			i = r.i;
+		}else if(['}', ']'].indexOf(t) !== -1){ //close		
+			console.log("type 5");	
+			isOpen = false;
+			i++;
+		}else if(t == '{'){
+			console.log("type 6");
+			
+		}else if(t == '['){
+			console.log("type 7");
+			
+		}else{
+			console.log("type 8");
+			throw 'Wrong value : ' + t + ":: i : " + i;
+		}
+		return {v:v, i:i, isOpen:isOpen};
+	}
+	return v=>{
+		let i = 0, r, stack = [], curr;
+		v = v.trim();
+		if(v[i] !== '{') throw 'JSON should start with {';
+		r = obj(v, i + 1);
+		console.log("최종", r.v);
+		return r.v;
+	}
+})();
+//const str = `
+//{
+//    "test1":"테스트1",
+//    "123":1234,
+//    "types":{
+//        "name":"string",
+//        "height":"number",
+//        "classes":[1,2,3,4, "aclass","bclass"]
+//    },
+//    "names":["aaa", "bbb","ccc"],
+//    "flag":true
+//}
+//`;
+const str = `
+{
+	"test1":"테스트1",
+	"test2":123
+}
+`;
+document.getElementById('result').innerHTML = parse(str);
+</script>
+</body>
+</html>
