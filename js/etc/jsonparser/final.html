@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>json Parser</title>
+</head>
+<body>
+<script>
+const parse = (_=>{
+	const REGEX_KEY = /(?:^\s*(?:"([^":]*)")\s*:\s*)/;
+	const REGEX_VAL = /(?:|\s+)([-]?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[Ee][+-]?[1-9]+)?)|(?:\"((?:[^"]|\\")*)\")|([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])|([Nn][Uu][Ll]{2})(?:|\s+)/;
+	const getKey = v=>{
+		v = (v + "").match(REGEX_KEY);
+		return v ? v[1] : '';
+	}
+	const getVal = v=>{
+		//공통 틀 : /(?:\s+)(?:$\s+)/
+		//숫자 : ([-]?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[Ee][+-]?[1-9]+)?)
+		//문자 : (?:\"((?:[^"]|\\")*)\")
+		//true,false,null ([Tt][Rr][Uu][Ee])([Ff][Aa][Ll][Ss][Ee])([Nn][Uu][Ll]{2})
+		v = v.match(REGEX_VAL);
+		if(v == null) v = '';
+		else if(v[1]) v = +v[1];
+		else if(v[2]) v = v[2];
+		else if(v[3]) v = v[3].toLowerCase() == 'true' ? true : false;
+		else if(v[4]) v = null;
+		return v;
+	}
+	const subKey = v=>{
+		//if(typeof v != 'string') throw 'Subkey arguments should be string : ' + v + ', type : '+ typeof v;
+		return ((v.trim() + "").replace(REGEX_KEY, '')).trim();
+	}
+	const subVal = v=>{
+		//if(typeof v != 'string') throw 'SubVal arguments should be string ' + v + ', type : '+ typeof v;
+		return ((v + "".trim()).replace(REGEX_VAL, '')).trim();
+	}
+	const keyName = v=>{
+		let k = [], p, curr, stack = [v];
+		while(curr = stack.pop()){
+			k.unshift(curr.t == 'o'? curr.k : curr.i);
+			if(curr.p && curr.p.p) stack.push(curr.p);
+		}
+		return k.join('.');
+	}
+	return (v, maker)=>{
+		let j = 300, curr, stack = [{p:null, v:v, t:'o', i:0, k:''}];
+		while((curr = stack.pop()) && j--){
+			const v = curr.v, t = curr.t, i = curr.i, k = curr.k;
+			let key, val;
+			switch(v[0]){
+			case '{':
+				stack.push({p:curr, v:v.substr(1).trim(), t:'o', i:0, k:''});
+			break;
+			case '[':
+				stack.push({p:curr, v:v.substr(1).trim(), t:'a', i:0, k:''});				
+			break;
+			case ',':
+				stack.push({p:curr.p, v:v.substr(1).trim(), t:t, i:i+1, k:k});
+			break;
+			case '}': case ']':
+				if(v.substr(1)) stack.push({p:curr.p.p, v:v.substr(1).trim(), t:curr.p.t, i:curr.p.i, k:curr.p.k});
+			break;
+			default:
+				if(key = getKey(v)) stack.push({p:curr.p, v:subKey(v), t:t, i:i, k:key});
+				else{
+					val = getVal(v);
+					if(val !== '') maker.set(keyName(curr), val);
+					stack.push({p:curr.p, v:subVal(v), t:t, i:i, k:curr.k});					
+				}
+			break;
+			}
+		}
+		return maker.get();
+	};
+})();
+const JsonMaker =(_=>{
+	let json = {};
+	const set = (k, v)=>{
+		let curr = json, key, keys = k.split('.');
+		keys.forEach((key, idx)=>{
+			const child = keys[idx + 1];
+			if(idx == keys.length - 1) curr[key] = v;
+			else {
+				if(!curr[key]) curr[key] = child && isNaN(child) ? {} : [];
+				curr = curr[key];
+			}
+		});
+	},
+	get = _=>{
+		return json;
+	};
+	return {
+		set:set,
+		get:get
+	}
+})();
+const test1 = `{
+	"number":1,
+	"string":"Hello world",
+	"obj":{"test":"Hello world", "yes":"no" , "deep": {"1":1, "2":2, "array":["a", {"b":"c"}, {"b":"c"}]} },
+	"null":null,
+	"bool1":true,
+	"bool2":false,
+	"arr":[1, 2, 3]
+}`;
+console.log('파싱 결과 :', parse(test1, JsonMaker));
+/*
+const test2 = `
+"null":null,
+"bool1":true,
+"bool2":false
+}`;
+const test2Result= `null,
+"bool1":true,
+"bool2":false
+}`;
+console.log('value - test2\n==================\n', getKey(test2), getKey(test2) === 'null');
+console.log('subVal - test2\n==================\n', subKey(test2), subKey(test2) == test2Result);*/
+/*	
+const test = (_=>{
+const test1 = `{
+	"number":1,
+	"string":"Hello world",
+	"null":null,
+	"bool1":true,
+	"bool2":false
+}`;
+const test2 = ` "number" `;
+const test3 = ` 1`;
+const test4 = `NULL`;
+const test5 = `true`;
+const test6 = `False`;
+console.log('key : ', getKey(test1), getKey(test1) == 'number');
+console.log('value - string :', getVal(test2), getVal(test2) === 'number');
+console.log('value - number :', getVal(test3), getVal(test3) === 1);
+console.log('value - null :', getVal(test4), getVal(test4) === null);
+console.log('value - true :', getVal(test5), getVal(test5) === true);
+console.log('value - false :', getVal(test6), getVal(test6) === false);
+})();*/
+</script>
+</body>
+</html>
